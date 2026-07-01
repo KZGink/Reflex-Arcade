@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Reflex Arcade Hub // Mobile Ready</title>
+    <style>
+        body {
+            background-color: #0d0e15;
+            color: #00ffcc;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            /* Prevents blue highlight box on mobile tap */
+            -webkit-tap-highlight-color: transparent; 
+        }
+
+        .game-container {
+            text-align: center;
+            background: #1a1c28;
+            padding: 30px 20px;
+            border-radius: 10px;
+            border: 2px solid #00ffcc;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.2);
+            width: 90%;
+            max-width: 440px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            margin: 0 0 20px 0;
+            font-size: 1.8rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .view { display: none; }
+        .view.active { display: block; }
+
+        .menu-btn {
+            background: transparent;
+            color: #00ffcc;
+            border: 2px solid #00ffcc;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            touch-action: manipulation;
+        }
+        .menu-btn:active {
+            background: #00ffcc;
+            color: #0d0e15;
+        }
+
+        .score-board {
+            font-size: 1.1rem;
+            margin-bottom: 25px;
+            color: #ff0077;
+        }
+
+        /* --- GAME 1: TRACK MODE --- */
+        .track {
+            width: 100%;
+            height: 35px;
+            background-color: #111;
+            position: relative;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            border: 1px solid #333;
+        }
+        .target-zone {
+            position: absolute;
+            left: 42.5%;
+            width: 15%;
+            height: 100%;
+            background-color: rgba(0, 255, 204, 0.3);
+            border-left: 2px dashed #00ffcc;
+            border-right: 2px dashed #00ffcc;
+            box-sizing: border-box;
+        }
+        .pin {
+            position: absolute;
+            left: 0%;
+            width: 10px;
+            height: 100%;
+            background-color: #ff0077;
+            box-shadow: 0 0 10px #ff0077;
+            border-radius: 2px;
+        }
+
+        /* --- GAME 2: TIMER MATCH MODE --- */
+        .unit-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .unit-btn {
+            background: #111;
+            border: 1px solid #333;
+            color: #888;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-family: inherit;
+            touch-action: manipulation;
+        }
+        .unit-btn.active {
+            border-color: #ff0077;
+            color: #ff0077;
+        }
+        .setup-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 25px;
+            margin: 15px 0;
+        }
+        .arrow-btn {
+            font-size: 2.2rem;
+            cursor: pointer;
+            color: #ff0077;
+            user-select: none;
+            padding: 0 10px;
+            touch-action: manipulation;
+        }
+        .setup-display {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #fff;
+            min-width: 140px;
+        }
+        .challenge-options {
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+        .challenge-options label {
+            cursor: pointer;
+            user-select: none;
+        }
+        .timer-panel {
+            background-color: #111;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        .live-timer {
+            font-size: 2.8rem;
+            font-weight: bold;
+            color: #fff;
+            letter-spacing: 1px;
+        }
+        .live-timer.hidden-time {
+            color: #222;
+            text-shadow: none;
+        }
+
+        /* Universal Controls */
+        .action-btn {
+            background: transparent;
+            color: #00ffcc;
+            border: 2px solid #00ffcc;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            width: 100%;
+            touch-action: manipulation;
+        }
+        .action-btn:active {
+            background: #00ffcc;
+            color: #0d0e15;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 25px;
+            color: #888;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 10px;
+        }
+        .message {
+            height: 20px;
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        .mobile-tip {
+            font-size: 0.8rem;
+            color: #555;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container" id="game-card">
+        <h1>Reflex Arcade</h1>
+
+        <div id="view-menu" class="view active">
+            <p style="color: #888; margin-bottom: 30px;">CHOOSE YOUR PARADIGM</p>
+            <button class="menu-btn" onclick="switchView('game1')">Mode 1: Laser Pin</button>
+            <button class="menu-btn" onclick="switchView('game2')">Mode 2: Precision Timer</button>
+            <p class="mobile-tip">Tap a mode to begin</p>
+        </div>
+
+        <div id="view-game1" class="view">
+            <div class="score-board">SCORE: <span id="g1-score">0</span> | BEST: <span id="g1-high">0</span></div>
+            <div class="track">
+                <div class="target-zone"></div>
+                <div class="pin" id="pin"></div>
+            </div>
+            <button id="g1-btn" class="action-btn">TAP TO ACTION / STOP</button>
+            <div id="g1-message" class="message">Tap Button or Screen to Start</div>
+            <div class="back-link" onclick="exitToMenu(event)">◀ Return to Main Menu</div>
+        </div>
+
+        <div id="view-game2" class="view">
+            <div class="score-board">MATCHES CAPTURED: <span id="g2-score">0</span></div>
+            
+            <div id="g2-setup">
+                <p style="margin: 0 0 10px 0;">SET TARGET DURATION</p>
+                <div class="unit-toggle">
+                    <button id="unit-sec" class="unit-btn active" onclick="setUnit('sec')">SECONDS</button>
+                    <button id="unit-min" class="unit-btn" onclick="setUnit('min')">MINUTES</button>
+                </div>
+                <div class="setup-row">
+                    <div class="arrow-btn" onclick="adjustTarget(-1, event)">◀</div>
+                    <div id="g2-setup-txt" class="setup-display">5 Secs</div>
+                    <div class="arrow-btn" onclick="adjustTarget(1, event)">▶</div>
+                </div>
+                <div class="challenge-options">
+                    <label>
+                        <input type="checkbox" id="blind-mode-chk"> ⚠️ BLIND MODE (Hide Clock)
+                    </label>
+                </div>
+            </div>
+
+            <div class="timer-panel">
+                <div style="font-size: 0.85rem; color:#888; margin-bottom: 5px;">STOP WATCH TIME</div>
+                <div id="g2-clock" class="live-timer">00:00.000</div>
+            </div>
+
+            <button id="g2-btn" class="action-btn">TAP TO CLOCK</button>
+            <div id="g2-message" class="message">Lock targets & Tap anywhere</div>
+            <div class="back-link" onclick="exitToMenu(event)">◀ Return to Main Menu</div>
+        </div>
+    </div>
+
+    <script>
+        const views = {
+            menu: document.getElementById('view-menu'),
+            game1: document.getElementById('view-game1'),
+            game2: document.getElementById('view-game2')
+        };
+        const gameCard = document.getElementById('game-card');
+
+        let currentActiveView = 'menu';
+
+        function switchView(target) {
+            views[currentActiveView].classList.remove('active');
+            views[target].classList.add('active');
+            currentActiveView = target;
+            resetAllStates();
+        }
+
+        function exitToMenu(e) {
+            if (e) e.stopPropagation(); // Prevents triggering a gameplay tap when leaving
+            switchView('menu');
+        }
+
+        /* ==================== MODE 1 CODE ==================== */
+        const pin = document.getElementById('pin');
+        const g1Btn = document.getElementById('g1-btn');
+        const g1ScoreDiv = document.getElementById('g1-score');
+        const g1HighDiv = document.getElementById('g1-high');
+        const g1Message = document.getElementById('g1-message');
+
+        let g1Pos = 0, g1Dir = 1, g1Speed = 2, g1Score = 0, g1High = 0, g1Playing = false, g1Interval;
+
+        function updateGame1() {
+            g1Pos += g1Speed * g1Dir;
+            if (g1Pos >= 98) { g1Pos = 98; g1Dir = -1; }
+            else if (g1Pos <= 0) { g1Pos = 0; g1Dir = 1; }
+            pin.style.left = g1Pos + '%';
+        }
+
+        function handleGame1Input() {
+            if (!g1Playing) {
+                g1Playing = true; g1Score = 0; g1Speed = 2;
+                g1ScoreDiv.textContent = g1Score;
+                g1Message.textContent = "HIT THE ZONE!"; g1Message.style.color = "#00ffcc";
+                g1Btn.textContent = "STOP";
+                g1Interval = setInterval(updateGame1, 10);
+                return;
+            }
+            if (g1Pos >= 42.5 && g1Pos <= 57.5) {
+                g1Score++; g1Speed += 0.5;
+                g1ScoreDiv.textContent = g1Score;
+                g1Message.textContent = "CRITICAL HIT!"; g1Message.style.color = "#00ffcc";
+                pin.style.backgroundColor = '#fff';
+                setTimeout(() => pin.style.backgroundColor = '#ff0077', 100);
+            } else {
+                g1Playing = false; clearInterval(g1Interval);
+                g1Message.textContent = "SYSTEM FAILURE."; g1Message.style.color = "#ff0077";
+                g1Btn.textContent = "RETRY";
+                if (g1Score > g1High) { g1High = g1Score; g1HighDiv.textContent = g1High; }
+            }
+        }
+
+        /* ==================== MODE 2 CODE ==================== */
+        const g2SetupPanel = document.getElementById('g2-setup');
+        const g2SetupText = document.getElementById('g2-setup-txt');
+        const g2ClockText = document.getElementById('g2-clock');
+        const g2Btn = document.getElementById('g2-btn');
+        const g2Message = document.getElementById('g2-message');
+        const g2ScoreDiv = document.getElementById('g2-score');
+        const unitSecBtn = document.getElementById('unit-sec');
+        const unitMinBtn = document.getElementById('unit-min');
+        const blindModeChk = document.getElementById('blind-mode-chk');
+
+        let targetUnit = 'sec'; 
+        let targetValue = 5;    
+        let g2Score = 0;
+        let g2Playing = false;
+        let g2StartTime = 0;
+        let g2AnimFrame;
+
+        function setUnit(unit) {
+            if (g2Playing) return;
+            targetUnit = unit;
+            if (unit === 'sec') {
+                unitSecBtn.classList.add('active');
+                unitMinBtn.classList.remove('active');
+                targetValue = 5; 
+            } else {
+                unitMinBtn.classList.add('active');
+                unitSecBtn.classList.remove('active');
+                targetValue = 1; 
+            }
+            updateSetupDisplay();
+        }
+
+        function adjustTarget(dir, e) {
+            if (e) e.stopPropagation(); // Stops adjustments from starting the game clock
+            if (g2Playing) return;
+            if (targetUnit === 'sec') {
+                targetValue += dir * 5; 
+                if (targetValue < 5) targetValue = 60;
+                if (targetValue > 60) targetValue = 5;
+            } else {
+                targetValue += dir; 
+                if (targetValue < 1) targetValue = 5;
+                if (targetValue > 5) targetValue = 1;
+            }
+            updateSetupDisplay();
+        }
+
+        function updateSetupDisplay() {
+            if (targetUnit === 'sec') {
+                g2SetupText.textContent = `${targetValue} Secs`;
+            } else {
+                g2SetupText.textContent = `${targetValue} Min${targetValue > 1 ? 's' : ''}`;
+            }
+        }
+
+        function formatMsDisplay(totalMs) {
+            const mins = Math.floor(totalMs / 60000);
+            const secs = Math.floor((totalMs % 60000) / 1000);
+            const ms = Math.floor(totalMs % 1000);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+        }
+
+        function runGame2Clock() {
+            if (!g2Playing) return;
+            const elapsed = performance.now() - g2StartTime;
+            
+            if (blindModeChk.checked) {
+                g2ClockText.textContent = "??:??.???"
+                g2ClockText.classList.add('hidden-time');
+            } else {
+                g2ClockText.textContent = formatMsDisplay(elapsed);
+                g2ClockText.classList.remove('hidden-time');
+            }
+            
+            g2AnimFrame = requestAnimationFrame(runGame2Clock);
+        }
+
+        function handleGame2Input() {
+            const targetMs = targetUnit === 'sec' ? targetValue * 1000 : targetValue * 60000;
+
+            if (!g2Playing) {
+                g2Playing = true;
+                g2SetupPanel.style.opacity = "0.2"; 
+                g2Btn.textContent = "STOP CLOCK";
+                g2Message.textContent = `Stop at: ${formatMsDisplay(targetMs)}`;
+                g2Message.style.color = "#00ffcc";
+                
+                g2StartTime = performance.now();
+                g2AnimFrame = requestAnimationFrame(runGame2Clock);
+                return;
+            }
+
+            g2Playing = false;
+            cancelAnimationFrame(g2AnimFrame);
+            g2ClockText.classList.remove('hidden-time');
+            
+            const absoluteFinalTime = performance.now() - g2StartTime;
+            g2ClockText.textContent = formatMsDisplay(absoluteFinalTime);
+
+            const variance = Math.abs(absoluteFinalTime - targetMs);
+
+            if (variance <= 250) {
+                g2Score++;
+                g2ScoreDiv.textContent = g2Score;
+                g2Message.textContent = `LOCKED! Off by ${variance.toFixed(0)}ms.`;
+                g2Message.style.color = "#00ffcc";
+                g2Btn.textContent = "NEXT RUN";
+            } else {
+                g2Message.textContent = `DESYNC: Missed by ${variance.toFixed(0)}ms.`;
+                g2Message.style.color = "#ff0077";
+                g2Btn.textContent = "RETRY MATCH";
+                g2Score = 0;
+                g2ScoreDiv.textContent = g2Score;
+            }
+            g2SetupPanel.style.opacity = "1";
+        }
+
+        /* ================= RESET AND ROUTING ================= */
+        function resetAllStates() {
+            clearInterval(g1Interval);
+            g1Playing = false;
+            g1Btn.textContent = "START GAME";
+            g1Message.textContent = "Tap anywhere to Start";
+            g1Message.style.color = "#00ffcc";
+            g1Pos = 0; pin.style.left = '0%';
+
+            cancelAnimationFrame(g2AnimFrame);
+            g2Playing = false;
+            g2SetupPanel.style.opacity = "1";
+            g2Btn.textContent = "START CLOCK";
+            g2Message.textContent = "Lock targets & Tap anywhere";
+            g2Message.style.color = "#00ffcc";
+            g2ClockText.textContent = "00:00.000";
+            g2ClockText.classList.remove('hidden-time');
+        }
+
+        function triggerInputEvent() {
+            if (currentActiveView === 'game1') handleGame1Input();
+            if (currentActiveView === 'game2') handleGame2Input();
+        }
+
+        // --- MOBILE TOUCH OVERRIDES ---
+        // Tapping anywhere inside the arcade machine bounds will register as a hit
+        gameCard.addEventListener('pointerdown', (e) => {
+            // Ignore touches hitting config targets directly (buttons, selectors, checkboxes)
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.classList.contains('arrow-btn') || e.target.classList.contains('back-link')) {
+                return; 
+            }
+            if (currentActiveView !== 'menu') {
+                e.preventDefault();
+                triggerInputEvent();
+            }
+        });
+
+        // Still allow regular clicks/taps on the action buttons directly
+        g1Btn.addEventListener('click', (e) => { e.stopPropagation(); triggerInputEvent(); });
+        g2Btn.addEventListener('click', (e) => { e.stopPropagation(); triggerInputEvent(); });
+
+        // Backup keyboard handler for desktop users
+        window.addEventListener('keydown', (e) => {
+            if (currentActiveView === 'menu') return; 
+            if (e.code === 'Space') {
+                e.preventDefault();
+                triggerInputEvent();
+            }
+        });
+    </script>
+</body>
+</html>
